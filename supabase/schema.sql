@@ -244,12 +244,81 @@ begin
 end;
 $$;
 
+create or replace function public.bulk_create_admin_mailboxes(
+  p_admin_password text,
+  p_items jsonb
+)
+returns table (
+  mailbox_id uuid,
+  display_name text,
+  inbox_email text,
+  route_token text,
+  is_active boolean,
+  total_emails bigint,
+  latest_received_at timestamptz
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  item jsonb;
+  v_local_part text;
+  v_display_name text;
+begin
+  if not public.is_valid_admin_password(p_admin_password) then
+    raise exception 'Password admin salah';
+  end if;
+
+  if p_items is null or jsonb_typeof(p_items) <> 'array' then
+    raise exception 'p_items must be a JSON array';
+  end if;
+
+  for item in
+    select value
+    from jsonb_array_elements(p_items)
+  loop
+    v_local_part := trim(lower(regexp_replace(coalesce(item->>'local_part', ''), '[^a-z0-9-]+', '-', 'g')));
+    v_local_part := regexp_replace(v_local_part, '-{2,}', '-', 'g');
+    v_local_part := regexp_replace(v_local_part, '(^-+|-+$)', '', 'g');
+
+    if v_local_part = '' then
+      continue;
+    end if;
+
+    v_display_name := coalesce(nullif(trim(item->>'display_name'), ''), replace(initcap(v_local_part), '-', ' '));
+
+    insert into public.user_mailboxes (slug, display_name, inbox_email)
+    values (
+      v_local_part,
+      v_display_name,
+      v_local_part || '@lkom.cloud'
+    )
+    on conflict (inbox_email) do nothing;
+
+    return query
+    select
+      m.id as mailbox_id,
+      m.display_name,
+      m.inbox_email,
+      m.route_token,
+      m.is_active,
+      0::bigint as total_emails,
+      null::timestamptz as latest_received_at
+    from public.user_mailboxes m
+    where m.inbox_email = v_local_part || '@lkom.cloud'
+    limit 1;
+  end loop;
+end;
+$$;
+
 grant execute on function public.is_valid_admin_password(text) to anon, authenticated;
 grant execute on function public.get_mailbox_by_route_token(text) to anon, authenticated;
 grant execute on function public.get_mailbox_inbox_by_route_token(text, integer) to anon, authenticated;
 grant execute on function public.get_admin_mailboxes(text) to anon, authenticated;
 grant execute on function public.get_admin_recent_incoming_emails(text, integer) to anon, authenticated;
 grant execute on function public.create_admin_mailbox(text, text, text) to anon, authenticated;
+grant execute on function public.bulk_create_admin_mailboxes(text, jsonb) to anon, authenticated;
 
 insert into public.user_mailboxes (slug, display_name, inbox_email)
 values (

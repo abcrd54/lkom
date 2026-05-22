@@ -66,7 +66,7 @@ const sampleInbox = [
 
 function formatTime(value) {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
+  if (!value || Number.isNaN(date.getTime())) {
     return "-";
   }
 
@@ -84,24 +84,6 @@ function extractOtp(message) {
     .join(" ");
   const match = source.match(/\b\d{4,8}\b/);
   return match ? match[0] : null;
-}
-
-async function copyText(value) {
-  if (navigator.clipboard && window.isSecureContext) {
-    await navigator.clipboard.writeText(value);
-    return true;
-  }
-
-  const helper = document.createElement("textarea");
-  helper.value = value;
-  helper.setAttribute("readonly", "");
-  helper.style.position = "fixed";
-  helper.style.left = "-9999px";
-  document.body.appendChild(helper);
-  helper.select();
-  const copied = document.execCommand("copy");
-  document.body.removeChild(helper);
-  return copied;
 }
 
 function getPathMode() {
@@ -123,6 +105,32 @@ function formatDisplayName(localPart) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function normalizeLocalPart(value) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+async function copyText(value) {
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(value);
+    return true;
+  }
+
+  const helper = document.createElement("textarea");
+  helper.value = value;
+  helper.setAttribute("readonly", "");
+  helper.style.position = "fixed";
+  helper.style.left = "-9999px";
+  document.body.appendChild(helper);
+  helper.select();
+  const copied = document.execCommand("copy");
+  document.body.removeChild(helper);
+  return copied;
 }
 
 function AdminLogin({ adminPassword, setAdminPassword, onSubmit, toast }) {
@@ -302,17 +310,27 @@ function AdminView({
   mailboxes,
   recentEmails,
   loading,
+  bulkLoading,
   status,
   toast,
   onRefresh,
   newMailboxLocalPart,
   onMailboxLocalPartChange,
   onCreateMailbox,
-  onCopyMailboxLink
+  onCopyMailboxLink,
+  bulkNames,
+  onBulkNamesChange,
+  onBulkGenerate,
+  onCopyBulkLinks,
+  generatedMailboxes
 }) {
   const totalActive = mailboxes.filter((mailbox) => mailbox.is_active).length;
   const latestEmail = recentEmails[0];
   const mailboxPreview = newMailboxLocalPart ? `${newMailboxLocalPart}@${MAIL_DOMAIN}` : `nama-user@${MAIL_DOMAIN}`;
+  const parsedBulkNames = bulkNames
+    .split(/\r?\n/)
+    .map((line) => normalizeLocalPart(line.trim()))
+    .filter(Boolean);
 
   return (
     <div className="app-shell admin-layout">
@@ -335,6 +353,12 @@ function AdminView({
           <strong>{mailboxes.length} mailbox</strong>
           <strong>{totalActive} aktif</strong>
           <strong>{recentEmails.length} terbaru</strong>
+        </div>
+
+        <div className="sidebar-card">
+          <span className="sidebar-label">Bulk</span>
+          <strong>{parsedBulkNames.length} baris siap</strong>
+          <span>{generatedMailboxes.length} mailbox baru</span>
         </div>
 
         <div className="sidebar-card">
@@ -382,7 +406,7 @@ function AdminView({
                 <h2>Daftar mailbox</h2>
                 <p>Alamat email yang aktif beserta link aksesnya.</p>
               </div>
-              <button className="button button-secondary" type="button" onClick={onRefresh} disabled={loading}>
+              <button className="button button-secondary" type="button" onClick={onRefresh} disabled={loading || bulkLoading}>
                 {loading ? "Memuat..." : "Refresh"}
               </button>
             </div>
@@ -398,7 +422,7 @@ function AdminView({
               </label>
               <div className="mailbox-preview-row">
                 <p className="mailbox-meta">Alamat otomatis: {mailboxPreview}</p>
-                <button className="button" type="submit" disabled={loading}>
+                <button className="button" type="submit" disabled={loading || bulkLoading}>
                   Buat mailbox
                 </button>
               </div>
@@ -433,6 +457,50 @@ function AdminView({
             </div>
           </div>
 
+          <div className="panel panel-large">
+            <div className="panel-head">
+              <div>
+                <h2>Bulk generate mailbox</h2>
+                <p>Satu baris akan menjadi satu mailbox baru dengan link akses masing-masing.</p>
+              </div>
+              <div className="hero-actions">
+                <button className="button button-secondary" type="button" onClick={onCopyBulkLinks} disabled={!generatedMailboxes.length}>
+                  Salin hasil
+                </button>
+                <button className="button" type="button" onClick={onBulkGenerate} disabled={loading || bulkLoading}>
+                  {bulkLoading ? "Generate..." : "Generate bulk"}
+                </button>
+              </div>
+            </div>
+
+            <label className="field">
+              <span>Input local-part per baris</span>
+              <textarea
+                value={bulkNames}
+                onChange={(event) => onBulkNamesChange(event.target.value)}
+                placeholder={"budi-santoso\nsiti-aminah\nraka-saputra"}
+              />
+            </label>
+
+            <div className="inbox-list">
+              {generatedMailboxes.length ? (
+                generatedMailboxes.map((mailbox) => (
+                  <article className="email-card" key={mailbox.mailbox_id}>
+                    <div className="email-card-top">
+                      <strong>{mailbox.display_name}</strong>
+                      <span>{mailbox.inbox_email}</span>
+                    </div>
+                    <p className="email-preview">{buildMailboxLink(mailbox.route_token)}</p>
+                  </article>
+                ))
+              ) : (
+                <div className="empty-box">Belum ada hasil bulk generate.</div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="content-grid single-column">
           <div className="panel">
             <div className="panel-head">
               <div>
@@ -488,7 +556,10 @@ function App() {
   const [mailboxes, setMailboxes] = useState([]);
   const [inbox, setInbox] = useState([]);
   const [recentEmails, setRecentEmails] = useState([]);
+  const [generatedMailboxes, setGeneratedMailboxes] = useState([]);
+  const [bulkNames, setBulkNames] = useState("");
   const [loading, setLoading] = useState(false);
+  const [bulkLoading, setBulkLoading] = useState(false);
   const [status, setStatus] = useState("Menyiapkan");
   const [toast, setToast] = useState("");
   const [newMailboxLocalPart, setNewMailboxLocalPart] = useState("");
@@ -656,14 +727,6 @@ function App() {
     setToast("Belum ada kode verifikasi.");
   }
 
-  function normalizeLocalPart(value) {
-    return value
-      .toLowerCase()
-      .replace(/[^a-z0-9-]+/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-|-$/g, "");
-  }
-
   async function handleCreateMailbox(event) {
     event.preventDefault();
 
@@ -711,6 +774,69 @@ function App() {
     await refreshAdmin(adminPassword);
   }
 
+  async function handleBulkGenerate() {
+    const items = bulkNames
+      .split(/\r?\n/)
+      .map((line) => normalizeLocalPart(line.trim()))
+      .filter(Boolean);
+
+    if (!items.length) {
+      setToast("Isi minimal satu local-part, satu baris satu mailbox.");
+      return;
+    }
+
+    const supabase = getSupabaseClient();
+
+    if (!supabase) {
+      const preview = items.map((localPart, index) => ({
+        mailbox_id: `preview-${index}-${localPart}`,
+        display_name: formatDisplayName(localPart),
+        inbox_email: `${localPart}@${MAIL_DOMAIN}`,
+        route_token: `preview-${localPart}-${index}`,
+        is_active: true,
+        total_emails: 0,
+        latest_received_at: null
+      }));
+
+      setGeneratedMailboxes(preview);
+      setToast("Supabase belum aktif. Ini hanya preview hasil bulk.");
+      return;
+    }
+
+    setBulkLoading(true);
+    const { data, error } = await supabase.rpc("bulk_create_admin_mailboxes", {
+      p_admin_password: adminPassword,
+      p_items: items.map((local_part) => ({ local_part }))
+    });
+
+    if (error) {
+      setBulkLoading(false);
+      setToast(error.message || "Bulk generate gagal.");
+      return;
+    }
+
+    const created = Array.isArray(data) ? data : [];
+    setGeneratedMailboxes(created);
+    setBulkNames("");
+    setToast(`Berhasil membuat ${created.length} mailbox.`);
+    setBulkLoading(false);
+    await refreshAdmin(adminPassword);
+  }
+
+  async function handleCopyBulkLinks() {
+    if (!generatedMailboxes.length) {
+      setToast("Belum ada hasil bulk generate.");
+      return;
+    }
+
+    const text = generatedMailboxes
+      .map((mailbox) => `${mailbox.inbox_email} | ${buildMailboxLink(mailbox.route_token)}`)
+      .join("\n");
+
+    await copyText(text);
+    setToast("Hasil bulk berhasil disalin.");
+  }
+
   if (mode === "admin" && !adminUnlocked) {
     return (
       <AdminLogin
@@ -743,6 +869,7 @@ function App() {
       mailboxes={mailboxes}
       recentEmails={recentEmails}
       loading={loading}
+      bulkLoading={bulkLoading}
       status={status}
       toast={toast}
       onRefresh={() => refreshAdmin(adminPassword)}
@@ -750,6 +877,11 @@ function App() {
       onMailboxLocalPartChange={(value) => setNewMailboxLocalPart(normalizeLocalPart(value))}
       onCreateMailbox={handleCreateMailbox}
       onCopyMailboxLink={handleCopyMailboxLink}
+      bulkNames={bulkNames}
+      onBulkNamesChange={setBulkNames}
+      onBulkGenerate={handleBulkGenerate}
+      onCopyBulkLinks={handleCopyBulkLinks}
+      generatedMailboxes={generatedMailboxes}
     />
   );
 }

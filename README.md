@@ -5,6 +5,13 @@ Dashboard sekarang punya dua tampilan:
 - `/` untuk admin
 - `/mail/<route_token_acak>` untuk inbox user
 
+Fitur utama:
+
+- admin bisa buat satu mailbox manual dari local-part
+- admin bisa bulk generate mailbox dari input satu baris satu local-part
+- setiap mailbox punya link akses user sendiri
+- halaman user hanya menampilkan inbox mailbox miliknya
+
 ## Jalankan
 
 ```bash
@@ -16,7 +23,7 @@ npm run dev
 
 1. Salin `.env.example` menjadi `.env`
 2. Isi `VITE_SUPABASE_URL` dan `VITE_SUPABASE_ANON_KEY`
-3. Jalankan SQL pada [supabase/schema.sql](F:/lkom/supabase/schema.sql)
+3. Jalankan SQL pada [supabase/schema.sql](E:/lkom/supabase/schema.sql)
 
 ## Struktur database
 
@@ -24,6 +31,7 @@ Tabel:
 
 - `public.user_mailboxes`
 - `public.incoming_emails`
+- `public.mail_processing_logs`
 
 Kolom penting mailbox:
 
@@ -39,6 +47,7 @@ Fungsi RPC:
 - `public.get_admin_mailboxes(p_admin_password)`
 - `public.get_admin_recent_incoming_emails(p_admin_password, p_limit)`
 - `public.create_admin_mailbox(p_admin_password, p_local_part, p_display_name)`
+- `public.bulk_create_admin_mailboxes(p_admin_password, p_items)`
 
 ## Akses admin
 
@@ -48,7 +57,8 @@ Halaman root `https://lkom.cloud/` dipakai untuk admin dan menampilkan:
 - alamat email inbox tiap user
 - link dashboard user
 - email masuk terbaru lintas semua mailbox
-- form create mailbox baru dari local-part email
+- form create mailbox baru
+- panel bulk generate mailbox
 
 Default password admin:
 
@@ -68,23 +78,35 @@ https://lkom.cloud/mail/<route_token_acak>
 
 ## Buat mailbox dari dashboard admin
 
-Di halaman admin, cukup isi local-part seperti:
+Input single mailbox:
 
 ```text
 riski-ridho
 ```
 
-Maka dashboard akan membuat:
+Hasil:
 
 ```text
 riski-ridho@lkom.cloud
-```
-
-dan otomatis menghasilkan link user:
-
-```text
 https://lkom.cloud/mail/<route_token_acak>
 ```
+
+## Bulk generate
+
+Input bulk di admin pakai format satu baris satu local-part:
+
+```text
+budi-santoso
+siti-aminah
+raka-saputra
+```
+
+Setiap baris akan membuat:
+
+- `display_name` otomatis
+- `inbox_email` otomatis
+- `route_token` otomatis
+- link mailbox user
 
 ## Insert email masuk
 
