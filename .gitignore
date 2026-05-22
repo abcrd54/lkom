@@ -3,6 +3,7 @@ dist/
 .env
 .env.local
 .env.*.local
+cloudflare-worker/.dev.vars
 
 .DS_Store
 Thumbs.db

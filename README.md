@@ -1,11 +1,9 @@
 # MailDesk OTP Dashboard
 
-Dashboard ini sekarang difokuskan untuk OTP:
+Dashboard sekarang punya dua tampilan:
 
-- satu user punya satu mailbox
-- satu user punya satu link akses inbox
-- frontend membaca inbox user tertentu dari Supabase
-- root dashboard dikunci password admin
+- `/` untuk admin
+- `/mail/<route_token_acak>` untuk inbox user
 
 ## Jalankan
 
@@ -27,27 +25,65 @@ Tabel:
 - `public.user_mailboxes`
 - `public.incoming_emails`
 
+Kolom penting mailbox:
+
+- `display_name`
+- `inbox_email`
+- `route_token`
+- `is_active`
+
 Fungsi RPC:
 
-- `public.get_mailbox_context(p_slug, p_access_token)`
-- `public.get_mailbox_inbox(p_slug, p_access_token, p_limit)`
-
-Frontend tidak lagi membaca semua email secara langsung. Dashboard memanggil RPC berdasarkan link user.
-
-## Format link user
-
-```text
-http://127.0.0.1:5173/?mailbox=demo-user&token=change-this-secret-token
-```
+- `public.get_mailbox_by_route_token(p_route_token)`
+- `public.get_mailbox_inbox_by_route_token(p_route_token, p_limit)`
+- `public.get_admin_mailboxes(p_admin_password)`
+- `public.get_admin_recent_incoming_emails(p_admin_password, p_limit)`
+- `public.create_admin_mailbox(p_admin_password, p_local_part, p_display_name)`
 
 ## Akses admin
 
-Halaman root `http://127.0.0.1:5173/` dikunci password admin frontend.
+Halaman root `https://lkom.cloud/` dipakai untuk admin dan menampilkan:
 
-Default password:
+- list semua mailbox
+- alamat email inbox tiap user
+- link dashboard user
+- email masuk terbaru lintas semua mailbox
+- form create mailbox baru dari local-part email
+
+Default password admin:
 
 ```text
 IkiJeporo1954
+```
+
+## Link user
+
+Format link user:
+
+```text
+https://lkom.cloud/mail/<route_token_acak>
+```
+
+`route_token` dibuat otomatis oleh database dengan nilai acak yang sulit ditebak.
+
+## Buat mailbox dari dashboard admin
+
+Di halaman admin, cukup isi local-part seperti:
+
+```text
+riski-ridho
+```
+
+Maka dashboard akan membuat:
+
+```text
+riski-ridho@lkom.cloud
+```
+
+dan otomatis menghasilkan link user:
+
+```text
+https://lkom.cloud/mail/<route_token_acak>
 ```
 
 ## Insert email masuk
@@ -71,7 +107,53 @@ select
   'Gunakan kode 384921 untuk masuk.',
   'Gunakan kode 384921 untuk masuk ke akun Anda.'
 from public.user_mailboxes
-where slug = 'demo-user';
+where inbox_email = 'demo-otp@maildesk.local';
 ```
 
-Kalau env atau RPC belum aktif, UI akan fallback ke data contoh lokal.
+Untuk melihat token user:
+
+```sql
+select display_name, inbox_email, route_token
+from public.user_mailboxes;
+```
+
+## Cloudflare Worker untuk email masuk
+
+Folder Worker:
+
+```text
+cloudflare-worker/
+```
+
+Fungsi Worker:
+
+- menerima email dari Cloudflare Email Routing
+- mencari `inbox_email` yang cocok di `user_mailboxes`
+- menyimpan email ke `incoming_emails`
+
+### Env Worker
+
+Salin `cloudflare-worker/.dev.vars.example` menjadi `.dev.vars` di folder `cloudflare-worker`, lalu isi:
+
+```text
+SUPABASE_URL=...
+SUPABASE_SERVICE_ROLE_KEY=...
+MAIL_DOMAIN=lkom.cloud
+```
+
+### Deploy Worker
+
+```bash
+cd cloudflare-worker
+npm install
+npm run deploy
+```
+
+### Setup di Cloudflare
+
+1. Aktifkan `Email Routing` untuk `lkom.cloud`
+2. Aktifkan `Catch-all address`
+3. Set action ke `Worker`
+4. Pilih Worker `maildesk-email-worker`
+
+Setelah itu email ke alamat seperti `riski-ridho@lkom.cloud` akan diterima Worker dan otomatis masuk ke database kalau mailbox tersebut ada di `user_mailboxes`.

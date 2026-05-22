@@ -45,6 +45,10 @@ textarea {
   min-height: 100vh;
 }
 
+.admin-layout {
+  grid-template-columns: 280px minmax(0, 1fr);
+}
+
 .admin-shell {
   min-height: 100vh;
   display: grid;
@@ -77,6 +81,11 @@ textarea {
 }
 
 .sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  overflow-y: auto;
   padding: 28px 22px;
   background: rgba(16, 24, 39, 0.92);
   color: #f8fafc;
@@ -204,6 +213,10 @@ th {
   align-items: start;
 }
 
+.admin-grid {
+  grid-template-columns: minmax(340px, 0.95fr) minmax(0, 1.2fr);
+}
+
 .stat-card,
 .panel {
   border: 1px solid rgba(255, 255, 255, 0.55);
@@ -314,6 +327,72 @@ textarea:focus {
 .inbox-list {
   display: grid;
   gap: 12px;
+}
+
+.mailbox-list {
+  display: grid;
+  gap: 12px;
+}
+
+.create-mailbox-form {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 16px;
+  border: 1px solid rgba(23, 32, 51, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.mailbox-field {
+  margin-bottom: 0;
+}
+
+.mailbox-preview-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.mailbox-card {
+  padding: 16px;
+  border: 1px solid rgba(23, 32, 51, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.mailbox-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+}
+
+.mailbox-meta {
+  margin: 8px 0 0;
+  color: var(--text-soft);
+}
+
+.mailbox-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.token-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: rgba(15, 118, 110, 0.08);
+  color: #114b47;
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  overflow-wrap: anywhere;
 }
 
 .email-card {
@@ -443,11 +522,18 @@ th {
   }
 
   .sidebar {
+    position: static;
+    height: auto;
+    overflow: visible;
     padding: 20px;
   }
 
   .content-grid,
   .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -460,7 +546,8 @@ th {
   .hero,
   .panel-head,
   .action-row,
-  .hero-actions {
+  .hero-actions,
+  .mailbox-preview-row {
     flex-direction: column;
   }
 
