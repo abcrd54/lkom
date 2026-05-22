@@ -18,9 +18,13 @@ create table if not exists public.incoming_emails (
   subject text not null,
   preview_text text,
   body_text text,
+  body_html text,
   received_at timestamptz not null default now(),
   created_at timestamptz not null default now()
 );
+
+alter table public.incoming_emails
+  add column if not exists body_html text;
 
 create table if not exists public.mail_processing_logs (
   id uuid primary key default gen_random_uuid(),
@@ -84,6 +88,8 @@ as $$
   limit 1;
 $$;
 
+drop function if exists public.get_mailbox_inbox_by_route_token(text, integer);
+
 create or replace function public.get_mailbox_inbox_by_route_token(
   p_route_token text,
   p_limit integer default 12
@@ -95,6 +101,7 @@ returns table (
   subject text,
   preview_text text,
   body_text text,
+  body_html text,
   received_at timestamptz
 )
 language sql
@@ -108,6 +115,7 @@ as $$
     e.subject,
     e.preview_text,
     e.body_text,
+    e.body_html,
     e.received_at
   from public.user_mailboxes m
   join public.incoming_emails e on e.mailbox_id = m.id
@@ -148,6 +156,8 @@ as $$
   order by max(e.received_at) desc nulls last, m.created_at desc;
 $$;
 
+drop function if exists public.get_admin_recent_incoming_emails(text, integer);
+
 create or replace function public.get_admin_recent_incoming_emails(
   p_admin_password text,
   p_limit integer default 14
@@ -162,6 +172,7 @@ returns table (
   subject text,
   preview_text text,
   body_text text,
+  body_html text,
   received_at timestamptz
 )
 language sql
@@ -178,6 +189,7 @@ as $$
     e.subject,
     e.preview_text,
     e.body_text,
+    e.body_html,
     e.received_at
   from public.user_mailboxes m
   join public.incoming_emails e on e.mailbox_id = m.id

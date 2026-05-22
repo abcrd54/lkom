@@ -2,6 +2,7 @@ import PostalMime from "postal-mime";
 
 const MAX_PREVIEW_LENGTH = 280;
 const MAX_BODY_LENGTH = 12000;
+const MAX_HTML_LENGTH = 50000;
 
 function normalizeEmail(value) {
   return String(value || "").trim().toLowerCase();
@@ -25,6 +26,13 @@ function buildPreview(parsedMail) {
 function buildBodyText(parsedMail) {
   const source = parsedMail.text || stripHtml(parsedMail.html || "");
   return source.replace(/\u0000/g, "").trim().slice(0, MAX_BODY_LENGTH);
+}
+
+function buildBodyHtml(parsedMail) {
+  return String(parsedMail.html || "")
+    .replace(/\u0000/g, "")
+    .trim()
+    .slice(0, MAX_HTML_LENGTH);
 }
 
 function stripHtml(value) {
@@ -160,6 +168,7 @@ export default {
       const senderEmail = normalizeEmail(parsedMail.from?.address || sender);
       const previewText = buildPreview(parsedMail);
       const bodyText = buildBodyText(parsedMail);
+      const bodyHtml = buildBodyHtml(parsedMail);
       const receivedAt = resolveReceivedAt(message.headers.get("date"));
 
       await insertIncomingEmail(env, {
@@ -169,6 +178,7 @@ export default {
         subject: subject || "(No subject)",
         preview_text: previewText || null,
         body_text: bodyText || null,
+        body_html: bodyHtml || null,
         received_at: receivedAt
       });
 

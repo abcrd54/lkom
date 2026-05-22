@@ -40,6 +40,12 @@ Kolom penting mailbox:
 - `route_token`
 - `is_active`
 
+Kolom penting email masuk:
+
+- `preview_text`
+- `body_text`
+- `body_html`
+
 Fungsi RPC:
 
 - `public.get_mailbox_by_route_token(p_route_token)`
@@ -107,6 +113,15 @@ Setiap baris akan membuat:
 - `inbox_email` otomatis
 - `route_token` otomatis
 - link mailbox user
+
+## Link verifikasi dari email HTML
+
+Frontend sekarang bisa mencoba membaca tombol/link verifikasi dari:
+
+- URL plaintext di `preview_text` atau `body_text`
+- atribut `href` di `body_html`
+
+Kalau mau tombol verifikasi tampil konsisten di UI, pastikan email masuk menyimpan `body_html`.
 
 ## Insert email masuk
 

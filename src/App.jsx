@@ -35,7 +35,9 @@ const sampleInbox = [
     sender_email: "login@telegram.org",
     subject: "Kode login Anda 384921",
     preview_text: "Gunakan kode 384921 untuk masuk. Jangan berikan kode ini ke siapa pun.",
-    body_text: "Gunakan kode 384921 untuk masuk ke akun Anda.",
+    body_text: "Gunakan kode 384921 untuk masuk ke akun Anda. https://example.com/verify/telegram-demo",
+    body_html:
+      '<p>Gunakan kode 384921 untuk masuk ke akun Anda.</p><p><a href="https://example.com/verify/telegram-demo">Verifikasi sekarang</a></p>',
     received_at: new Date().toISOString()
   },
   {
@@ -48,6 +50,8 @@ const sampleInbox = [
     subject: "Kode verifikasi Google",
     preview_text: "Masukkan kode 771204 untuk menyelesaikan login.",
     body_text: "Kode verifikasi Anda adalah 771204.",
+    body_html:
+      '<p>Kode verifikasi Anda adalah <strong>771204</strong>.</p><p><a href="https://accounts.google.com/sample-verify">Review activity</a></p>',
     received_at: new Date(Date.now() - 3600 * 1000).toISOString()
   },
   {
@@ -60,6 +64,7 @@ const sampleInbox = [
     subject: "Your verification code is 556812",
     preview_text: "Use code 556812 to continue login.",
     body_text: "Use code 556812 to continue login.",
+    body_html: "<p>Use code <strong>556812</strong> to continue login.</p>",
     received_at: new Date(Date.now() - 7200 * 1000).toISOString()
   }
 ];
@@ -79,11 +84,26 @@ function formatTime(value) {
 }
 
 function extractOtp(message) {
-  const source = [message.subject, message.preview_text, message.body_text]
+  const source = [message.subject, message.preview_text, message.body_text, message.body_html]
     .filter(Boolean)
     .join(" ");
   const match = source.match(/\b\d{4,8}\b/);
   return match ? match[0] : null;
+}
+
+function extractActionLinks(message) {
+  const textSource = [message.subject, message.preview_text, message.body_text]
+    .filter(Boolean)
+    .join(" ");
+  const textMatches = textSource.match(/https?:\/\/[^\s<>"')]+/g) || [];
+  const htmlSource = message.body_html || "";
+  const htmlMatches = [...htmlSource.matchAll(/href\s*=\s*["']([^"']+)["']/gi)].map((match) => match[1]);
+  const matches = [...textMatches, ...htmlMatches];
+
+  return [...new Set(matches)].map((url, index) => ({
+    id: `${message.id}-link-${index}`,
+    url
+  }));
 }
 
 function getPathMode() {
@@ -274,6 +294,7 @@ function MailboxView({ mailbox, inbox, loading, status, toast, onRefresh, onCopy
               {inbox.length ? (
                 inbox.map((message) => {
                   const otp = extractOtp(message);
+                  const actionLinks = extractActionLinks(message);
 
                   return (
                     <article className="email-card" key={message.id}>
@@ -288,6 +309,17 @@ function MailboxView({ mailbox, inbox, loading, status, toast, onRefresh, onCopy
                         <span className={`status-pill ${otp ? "valid" : "invalid"}`}>
                           {otp ? `Kode ${otp}` : "Tanpa kode"}
                         </span>
+                        {actionLinks.map((link) => (
+                          <a
+                            key={link.id}
+                            className="button button-secondary"
+                            href={link.url}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Buka link verifikasi
+                          </a>
+                        ))}
                       </div>
                     </article>
                   );
@@ -476,6 +508,7 @@ function AdminView({
               {sortedRecentEmails.length ? (
                 sortedRecentEmails.map((message) => {
                   const otp = extractOtp(message);
+                  const actionLinks = extractActionLinks(message);
 
                   return (
                     <article className="email-card" key={message.id}>
@@ -490,6 +523,17 @@ function AdminView({
                         <span className={`status-pill ${otp ? "valid" : "invalid"}`}>
                           {otp ? `Kode ${otp}` : "Tanpa kode"}
                         </span>
+                        {actionLinks.map((link) => (
+                          <a
+                            key={link.id}
+                            className="button button-secondary"
+                            href={link.url}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Buka link verifikasi
+                          </a>
+                        ))}
                       </div>
                     </article>
                   );
@@ -535,7 +579,7 @@ function AdminView({
                       <strong>{mailbox.display_name}</strong>
                       <span>{mailbox.inbox_email}</span>
                     </div>
-                    <p className="email-preview">{buildMailboxLink(mailbox.route_token)}</p>
+                    <p className="email-preview link-preview">{buildMailboxLink(mailbox.route_token)}</p>
                     <div className="email-meta">
                       <button className="button button-secondary" type="button" onClick={() => onCopyMailboxEmail(mailbox.inbox_email)}>
                         Salin email
