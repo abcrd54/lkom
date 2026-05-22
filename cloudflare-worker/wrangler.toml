@@ -2,5 +2,8 @@ name = "maildesk-email-worker"
 main = "src/index.js"
 compatibility_date = "2026-05-22"
 
+[vars]
+MAIL_DOMAIN = "lkom.cloud"
+
 [observability.logs]
 enabled = true

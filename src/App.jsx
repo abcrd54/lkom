@@ -353,11 +353,6 @@ function AdminView({
               Kelola alamat email, buat link akses aman, dan pantau pesan masuk terbaru dari satu tempat.
             </p>
           </div>
-          <div className="hero-actions">
-            <button className="button button-secondary" type="button" onClick={onRefresh} disabled={loading}>
-              {loading ? "Memuat..." : "Refresh"}
-            </button>
-          </div>
         </header>
 
         <section className="stats-grid">
@@ -387,6 +382,9 @@ function AdminView({
                 <h2>Daftar mailbox</h2>
                 <p>Alamat email yang aktif beserta link aksesnya.</p>
               </div>
+              <button className="button button-secondary" type="button" onClick={onRefresh} disabled={loading}>
+                {loading ? "Memuat..." : "Refresh"}
+              </button>
             </div>
 
             <form className="create-mailbox-form" onSubmit={onCreateMailbox}>
