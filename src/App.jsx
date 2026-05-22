@@ -326,7 +326,10 @@ function AdminView({
   generatedMailboxes
 }) {
   const totalActive = mailboxes.filter((mailbox) => mailbox.is_active).length;
-  const latestEmail = recentEmails[0];
+  const sortedRecentEmails = [...recentEmails].sort((left, right) => {
+    return new Date(right.received_at).getTime() - new Date(left.received_at).getTime();
+  });
+  const latestEmail = sortedRecentEmails[0];
   const mailboxPreview = newMailboxLocalPart ? `${newMailboxLocalPart}@${MAIL_DOMAIN}` : `nama-user@${MAIL_DOMAIN}`;
   const parsedBulkNames = bulkNames
     .split(/\r?\n/)
@@ -389,13 +392,13 @@ function AdminView({
 
           <article className="stat-card">
             <span>Email terbaru</span>
-            <strong>{recentEmails.length}</strong>
+            <strong>{sortedRecentEmails.length}</strong>
             <p>{latestEmail ? `${latestEmail.mailbox_name} - ${formatTime(latestEmail.received_at)}` : "Belum ada aktivitas email masuk."}</p>
           </article>
 
           <article className="stat-card">
             <span>Kode terdeteksi</span>
-            <strong>{recentEmails.filter((item) => Boolean(extractOtp(item))).length}</strong>
+            <strong>{sortedRecentEmails.filter((item) => Boolean(extractOtp(item))).length}</strong>
             <p>Kode verifikasi yang terdeteksi dari email terbaru.</p>
           </article>
         </section>
@@ -461,6 +464,44 @@ function AdminView({
             </div>
           </div>
 
+          <div className="panel">
+            <div className="panel-head">
+              <div>
+                <h2>Email terbaru</h2>
+                <p>Pesan masuk terbaru dari seluruh mailbox, diurutkan dari yang paling baru.</p>
+              </div>
+            </div>
+
+            <div className="inbox-list">
+              {sortedRecentEmails.length ? (
+                sortedRecentEmails.map((message) => {
+                  const otp = extractOtp(message);
+
+                  return (
+                    <article className="email-card" key={message.id}>
+                      <div className="email-card-top">
+                        <strong>{message.mailbox_name || message.inbox_email}</strong>
+                        <span>{formatTime(message.received_at)}</span>
+                      </div>
+                      <p className="email-address">{message.inbox_email}</p>
+                      <p className="email-subject">{message.subject}</p>
+                      <p className="email-preview">{message.preview_text || message.body_text || "-"}</p>
+                      <div className="email-meta">
+                        <span className={`status-pill ${otp ? "valid" : "invalid"}`}>
+                          {otp ? `Kode ${otp}` : "Tanpa kode"}
+                        </span>
+                      </div>
+                    </article>
+                  );
+                })
+              ) : (
+                <div className="empty-box">Belum ada aktivitas email terbaru.</div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="content-grid single-column">
           <div className="panel panel-large">
             <div className="panel-head">
               <div>
@@ -504,44 +545,6 @@ function AdminView({
                 ))
               ) : (
                 <div className="empty-box">Belum ada hasil bulk generate.</div>
-              )}
-            </div>
-          </div>
-        </section>
-
-        <section className="content-grid single-column">
-          <div className="panel">
-            <div className="panel-head">
-              <div>
-                <h2>Email terbaru</h2>
-                <p>Pesan masuk terbaru dari seluruh mailbox.</p>
-              </div>
-            </div>
-
-            <div className="inbox-list">
-              {recentEmails.length ? (
-                recentEmails.map((message) => {
-                  const otp = extractOtp(message);
-
-                  return (
-                    <article className="email-card" key={message.id}>
-                      <div className="email-card-top">
-                        <strong>{message.mailbox_name || message.inbox_email}</strong>
-                        <span>{formatTime(message.received_at)}</span>
-                      </div>
-                      <p className="email-address">{message.inbox_email}</p>
-                      <p className="email-subject">{message.subject}</p>
-                      <p className="email-preview">{message.preview_text || message.body_text || "-"}</p>
-                      <div className="email-meta">
-                        <span className={`status-pill ${otp ? "valid" : "invalid"}`}>
-                          {otp ? `Kode ${otp}` : "Tanpa kode"}
-                        </span>
-                      </div>
-                    </article>
-                  );
-                })
-              ) : (
-                <div className="empty-box">Belum ada aktivitas email terbaru.</div>
               )}
             </div>
           </div>
