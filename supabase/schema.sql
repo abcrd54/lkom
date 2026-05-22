@@ -294,7 +294,7 @@ begin
       v_display_name,
       v_local_part || '@lkom.cloud'
     )
-    on conflict (inbox_email) do nothing;
+    on conflict on constraint user_mailboxes_inbox_email_key do nothing;
 
     return query
     select
@@ -326,4 +326,4 @@ values (
   'Demo User',
   'demo-otp@maildesk.local'
 )
-on conflict (inbox_email) do nothing;
+on conflict on constraint user_mailboxes_inbox_email_key do nothing;

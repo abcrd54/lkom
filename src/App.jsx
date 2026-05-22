@@ -318,6 +318,7 @@ function AdminView({
   onMailboxLocalPartChange,
   onCreateMailbox,
   onCopyMailboxLink,
+  onCopyMailboxEmail,
   bulkNames,
   onBulkNamesChange,
   onBulkGenerate,
@@ -445,6 +446,9 @@ function AdminView({
                     <p className="mailbox-meta">Aktivitas terakhir: {formatTime(mailbox.latest_received_at)}</p>
                     <div className="mailbox-actions">
                       <code className="token-chip">Link akses aman</code>
+                      <button className="button button-secondary" type="button" onClick={() => onCopyMailboxEmail(mailbox.inbox_email)}>
+                        Salin email
+                      </button>
                       <button className="button button-secondary" type="button" onClick={() => onCopyMailboxLink(mailbox.route_token)}>
                         Salin link
                       </button>
@@ -491,6 +495,11 @@ function AdminView({
                       <span>{mailbox.inbox_email}</span>
                     </div>
                     <p className="email-preview">{buildMailboxLink(mailbox.route_token)}</p>
+                    <div className="email-meta">
+                      <button className="button button-secondary" type="button" onClick={() => onCopyMailboxEmail(mailbox.inbox_email)}>
+                        Salin email
+                      </button>
+                    </div>
                   </article>
                 ))
               ) : (
@@ -727,6 +736,16 @@ function App() {
     setToast("Belum ada kode verifikasi.");
   }
 
+  async function handleCopyMailboxEmail(email) {
+    if (!email) {
+      setToast("Email tidak tersedia.");
+      return;
+    }
+
+    await copyText(email);
+    setToast("Email berhasil disalin.");
+  }
+
   async function handleCreateMailbox(event) {
     event.preventDefault();
 
@@ -877,6 +896,7 @@ function App() {
       onMailboxLocalPartChange={(value) => setNewMailboxLocalPart(normalizeLocalPart(value))}
       onCreateMailbox={handleCreateMailbox}
       onCopyMailboxLink={handleCopyMailboxLink}
+      onCopyMailboxEmail={handleCopyMailboxEmail}
       bulkNames={bulkNames}
       onBulkNamesChange={setBulkNames}
       onBulkGenerate={handleBulkGenerate}
