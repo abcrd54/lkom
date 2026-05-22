@@ -270,7 +270,7 @@ function MailboxView({ mailbox, inbox, loading, status, toast, onRefresh, onCopy
               </div>
             </div>
 
-            <div className="inbox-list">
+            <div className="inbox-list scroll-area scroll-area-mailbox">
               {inbox.length ? (
                 inbox.map((message) => {
                   const otp = extractOtp(message);
@@ -472,7 +472,7 @@ function AdminView({
               </div>
             </div>
 
-            <div className="inbox-list">
+            <div className="inbox-list scroll-area scroll-area-admin">
               {sortedRecentEmails.length ? (
                 sortedRecentEmails.map((message) => {
                   const otp = extractOtp(message);

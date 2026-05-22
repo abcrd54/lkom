@@ -329,6 +329,34 @@ textarea:focus {
   gap: 12px;
 }
 
+.scroll-area {
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.scroll-area-mailbox {
+  max-height: 68vh;
+}
+
+.scroll-area-admin {
+  max-height: 72vh;
+}
+
+.scroll-area::-webkit-scrollbar {
+  width: 10px;
+}
+
+.scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(23, 32, 51, 0.18);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .mailbox-list {
   display: grid;
   gap: 12px;
@@ -535,6 +563,14 @@ th {
 
   .admin-grid {
     grid-template-columns: 1fr;
+  }
+
+  .scroll-area,
+  .scroll-area-mailbox,
+  .scroll-area-admin {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
   }
 }
 
