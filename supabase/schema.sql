@@ -22,14 +22,30 @@ create table if not exists public.incoming_emails (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.mail_processing_logs (
+  id uuid primary key default gen_random_uuid(),
+  mailbox_id uuid references public.user_mailboxes(id) on delete set null,
+  inbox_email text,
+  sender_email text,
+  subject text,
+  status text not null,
+  error_message text,
+  created_at timestamptz not null default now()
+);
+
 create index if not exists incoming_emails_mailbox_id_received_at_idx
   on public.incoming_emails (mailbox_id, received_at desc);
 
+create index if not exists mail_processing_logs_created_at_idx
+  on public.mail_processing_logs (created_at desc);
+
 alter table public.user_mailboxes enable row level security;
 alter table public.incoming_emails enable row level security;
+alter table public.mail_processing_logs enable row level security;
 
 revoke all on public.user_mailboxes from anon, authenticated;
 revoke all on public.incoming_emails from anon, authenticated;
+revoke all on public.mail_processing_logs from anon, authenticated;
 
 create or replace function public.is_valid_admin_password(
   p_admin_password text

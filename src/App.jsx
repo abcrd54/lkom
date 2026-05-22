@@ -132,16 +132,16 @@ function AdminLogin({ adminPassword, setAdminPassword, onSubmit, toast }) {
         <div className="brand-block">
           <div className="brand-mark">M</div>
           <div>
-            <p className="brand-title">MailDesk OTP</p>
-            <span className="brand-subtitle">Admin Access</span>
+            <p className="brand-title">MailDesk</p>
+            <span className="brand-subtitle">Panel Admin</span>
           </div>
         </div>
 
         <div className="admin-copy">
-          <p className="hero-kicker">Area Admin</p>
-          <h1>Dashboard daftar mailbox</h1>
+          <p className="hero-kicker">Administrator</p>
+          <h1>Akses email terpusat</h1>
           <p className="hero-copy">
-            Root berisi daftar semua email inbox dan email masuk terbaru. Link user memakai path acak `/mail/token-acak`.
+            Masuk untuk mengelola alamat email, melihat pesan terbaru, dan membuka link mailbox yang aman.
           </p>
         </div>
 
@@ -156,7 +156,7 @@ function AdminLogin({ adminPassword, setAdminPassword, onSubmit, toast }) {
             />
           </label>
           <button className="button" type="submit">
-            Masuk admin
+            Lanjut
           </button>
         </form>
       </section>
@@ -188,8 +188,8 @@ function MailboxView({ mailbox, inbox, loading, status, toast, onRefresh, onCopy
         <div className="brand-block">
           <div className="brand-mark">M</div>
           <div>
-            <p className="brand-title">MailDesk OTP</p>
-            <span className="brand-subtitle">Mailbox User</span>
+            <p className="brand-title">MailDesk</p>
+            <span className="brand-subtitle">Inbox Aman</span>
           </div>
         </div>
 
@@ -199,30 +199,30 @@ function MailboxView({ mailbox, inbox, loading, status, toast, onRefresh, onCopy
         </div>
 
         <div className="sidebar-card">
-          <span className="sidebar-label">Inbox aktif</span>
+          <span className="sidebar-label">Mailbox</span>
           <strong>{mailbox?.display_name || "-"}</strong>
           <span>{mailbox?.inbox_email || "-"}</span>
         </div>
 
         <div className="sidebar-card">
-          <span className="sidebar-label">OTP terbaru</span>
+          <span className="sidebar-label">Kode terbaru</span>
           <strong>{latestOtp?.code || "Belum ada"}</strong>
-          <span>{latestOtp ? formatTime(latestOtp.receivedAt) : "Belum ada email OTP."}</span>
+          <span>{latestOtp ? formatTime(latestOtp.receivedAt) : "Belum ada kode verifikasi."}</span>
         </div>
       </aside>
 
       <main className="main">
         <header className="hero">
           <div>
-            <p className="hero-kicker">Inbox User</p>
-            <h1>Dashboard mail untuk satu user</h1>
+            <p className="hero-kicker">Mailbox</p>
+            <h1>Akses mailbox pribadi</h1>
             <p className="hero-copy">
-              Halaman ini hanya membaca inbox dari token path yang dipakai. Cocok untuk inbox OTP per user.
+              Halaman ini menampilkan email verifikasi terbaru sesuai link aman yang sedang dibuka.
             </p>
           </div>
           <div className="hero-actions">
             <button className="button button-secondary" type="button" onClick={onCopyLink}>
-              Copy link
+              Salin link
             </button>
             <button className="button button-secondary" type="button" onClick={onRefresh} disabled={loading}>
               {loading ? "Memuat..." : "Refresh inbox"}
@@ -232,24 +232,24 @@ function MailboxView({ mailbox, inbox, loading, status, toast, onRefresh, onCopy
 
         <section className="stats-grid">
           <article className="stat-card accent-card">
-            <span>OTP terbaru</span>
+            <span>Kode terbaru</span>
             <strong>{latestOtp?.code || "Belum ada"}</strong>
-            <p>{latestOtp ? `${latestOtp.sender} - ${formatTime(latestOtp.receivedAt)}` : "Belum ada email OTP yang cocok."}</p>
+            <p>{latestOtp ? `${latestOtp.sender} - ${formatTime(latestOtp.receivedAt)}` : "Belum ada email verifikasi yang masuk."}</p>
             <button className="button" type="button" onClick={onCopyOtp}>
-              Copy OTP
+              Salin kode
             </button>
           </article>
 
           <article className="stat-card">
-            <span>Mailbox email</span>
+            <span>Alamat email</span>
             <strong>{mailbox?.inbox_email || "-"}</strong>
-            <p>{mailbox?.route_token ? `/mail/${mailbox.route_token}` : "Token belum tersedia."}</p>
+            <p>{mailbox?.route_token ? "Link akses tersedia" : "Link akses belum tersedia."}</p>
           </article>
 
           <article className="stat-card">
-            <span>Total email</span>
+            <span>Total pesan</span>
             <strong>{inbox.length}</strong>
-            <p>{inbox[0] ? formatTime(inbox[0].received_at) : "Belum ada email masuk."}</p>
+            <p>{inbox[0] ? formatTime(inbox[0].received_at) : "Belum ada pesan masuk."}</p>
           </article>
         </section>
 
@@ -257,8 +257,8 @@ function MailboxView({ mailbox, inbox, loading, status, toast, onRefresh, onCopy
           <div className="panel">
             <div className="panel-head">
               <div>
-                <h2>Kotak masuk</h2>
-                <p>Inbox terbaru untuk mailbox ini.</p>
+                <h2>Inbox</h2>
+                <p>Pesan terbaru yang masuk ke mailbox ini.</p>
               </div>
             </div>
 
@@ -278,14 +278,14 @@ function MailboxView({ mailbox, inbox, loading, status, toast, onRefresh, onCopy
                       <p className="email-preview">{message.preview_text || message.body_text || "-"}</p>
                       <div className="email-meta">
                         <span className={`status-pill ${otp ? "valid" : "invalid"}`}>
-                          {otp ? `OTP ${otp}` : "Tanpa OTP"}
+                          {otp ? `Kode ${otp}` : "Tanpa kode"}
                         </span>
                       </div>
                     </article>
                   );
                 })
               ) : (
-                <div className="empty-box">Belum ada email untuk mailbox ini.</div>
+                <div className="empty-box">Belum ada pesan yang masuk ke mailbox ini.</div>
               )}
             </div>
           </div>
@@ -320,8 +320,8 @@ function AdminView({
         <div className="brand-block">
           <div className="brand-mark">M</div>
           <div>
-            <p className="brand-title">MailDesk OTP</p>
-            <span className="brand-subtitle">Admin Dashboard</span>
+            <p className="brand-title">MailDesk</p>
+            <span className="brand-subtitle">Operasional</span>
           </div>
         </div>
 
@@ -334,28 +334,28 @@ function AdminView({
           <span className="sidebar-label">Ringkas</span>
           <strong>{mailboxes.length} mailbox</strong>
           <strong>{totalActive} aktif</strong>
-          <strong>{recentEmails.length} email terbaru</strong>
+          <strong>{recentEmails.length} terbaru</strong>
         </div>
 
         <div className="sidebar-card">
-          <span className="sidebar-label">Akun admin</span>
-          <strong>Password aktif</strong>
-          <span>{adminPassword ? "Session tersimpan di browser." : "Belum aktif."}</span>
+          <span className="sidebar-label">Sesi</span>
+          <strong>Administrator</strong>
+          <span>{adminPassword ? "Sudah masuk di perangkat ini." : "Belum masuk."}</span>
         </div>
       </aside>
 
       <main className="main">
         <header className="hero">
           <div>
-            <p className="hero-kicker">Index Admin</p>
-            <h1>Daftar semua email dan kotak masuk user</h1>
+            <p className="hero-kicker">Pusat Kontrol</p>
+            <h1>Daftar mailbox dan aktivitas terbaru</h1>
             <p className="hero-copy">
-              Root dashboard menampilkan semua mailbox, alamat inbox yang dipakai, link dashboard user, dan email masuk terbaru lintas mailbox.
+              Kelola alamat email, buat link akses aman, dan pantau pesan masuk terbaru dari satu tempat.
             </p>
           </div>
           <div className="hero-actions">
             <button className="button button-secondary" type="button" onClick={onRefresh} disabled={loading}>
-              {loading ? "Memuat..." : "Refresh admin"}
+              {loading ? "Memuat..." : "Refresh"}
             </button>
           </div>
         </header>
@@ -364,19 +364,19 @@ function AdminView({
           <article className="stat-card accent-card">
             <span>Total mailbox</span>
             <strong>{mailboxes.length}</strong>
-            <p>{totalActive} mailbox aktif untuk menerima email.</p>
+            <p>{totalActive} mailbox aktif siap menerima email.</p>
           </article>
 
           <article className="stat-card">
             <span>Email terbaru</span>
             <strong>{recentEmails.length}</strong>
-            <p>{latestEmail ? `${latestEmail.mailbox_name} - ${formatTime(latestEmail.received_at)}` : "Belum ada email masuk."}</p>
+            <p>{latestEmail ? `${latestEmail.mailbox_name} - ${formatTime(latestEmail.received_at)}` : "Belum ada aktivitas email masuk."}</p>
           </article>
 
           <article className="stat-card">
-            <span>OTP terdeteksi</span>
+            <span>Kode terdeteksi</span>
             <strong>{recentEmails.filter((item) => Boolean(extractOtp(item))).length}</strong>
-            <p>Diambil dari email terbaru lintas mailbox.</p>
+            <p>Kode verifikasi yang terdeteksi dari email terbaru.</p>
           </article>
         </section>
 
@@ -384,14 +384,14 @@ function AdminView({
           <div className="panel">
             <div className="panel-head">
               <div>
-                <h2>List mailbox</h2>
-                <p>Semua alamat email inbox dan link dashboard user.</p>
+                <h2>Daftar mailbox</h2>
+                <p>Alamat email yang aktif beserta link aksesnya.</p>
               </div>
             </div>
 
             <form className="create-mailbox-form" onSubmit={onCreateMailbox}>
               <label className="field mailbox-field">
-                <span>Buat email user baru</span>
+                <span>Buat mailbox baru</span>
                 <input
                   value={newMailboxLocalPart}
                   onChange={(event) => onMailboxLocalPartChange(event.target.value)}
@@ -399,7 +399,7 @@ function AdminView({
                 />
               </label>
               <div className="mailbox-preview-row">
-                <p className="mailbox-meta">Email otomatis: {mailboxPreview}</p>
+                <p className="mailbox-meta">Alamat otomatis: {mailboxPreview}</p>
                 <button className="button" type="submit" disabled={loading}>
                   Buat mailbox
                 </button>
@@ -419,18 +419,18 @@ function AdminView({
                         {mailbox.is_active ? "Aktif" : "Nonaktif"}
                       </span>
                     </div>
-                    <p className="mailbox-meta">Email masuk: {mailbox.total_emails || 0}</p>
-                    <p className="mailbox-meta">Terakhir: {formatTime(mailbox.latest_received_at)}</p>
+                    <p className="mailbox-meta">Pesan masuk: {mailbox.total_emails || 0}</p>
+                    <p className="mailbox-meta">Aktivitas terakhir: {formatTime(mailbox.latest_received_at)}</p>
                     <div className="mailbox-actions">
-                      <code className="token-chip">/mail/{mailbox.route_token}</code>
+                      <code className="token-chip">Link akses aman</code>
                       <button className="button button-secondary" type="button" onClick={() => onCopyMailboxLink(mailbox.route_token)}>
-                        Copy link
+                        Salin link
                       </button>
                     </div>
                   </article>
                 ))
               ) : (
-                <div className="empty-box">Belum ada mailbox di database.</div>
+                <div className="empty-box">Belum ada mailbox yang tersedia.</div>
               )}
             </div>
           </div>
@@ -439,7 +439,7 @@ function AdminView({
             <div className="panel-head">
               <div>
                 <h2>Email terbaru</h2>
-                <p>Kotak masuk lintas semua user.</p>
+                <p>Pesan masuk terbaru dari seluruh mailbox.</p>
               </div>
             </div>
 
@@ -459,14 +459,14 @@ function AdminView({
                       <p className="email-preview">{message.preview_text || message.body_text || "-"}</p>
                       <div className="email-meta">
                         <span className={`status-pill ${otp ? "valid" : "invalid"}`}>
-                          {otp ? `OTP ${otp}` : "Tanpa OTP"}
+                          {otp ? `Kode ${otp}` : "Tanpa kode"}
                         </span>
                       </div>
                     </article>
                   );
                 })
               ) : (
-                <div className="empty-box">Belum ada email terbaru.</div>
+                <div className="empty-box">Belum ada aktivitas email terbaru.</div>
               )}
             </div>
           </div>
@@ -491,7 +491,7 @@ function App() {
   const [inbox, setInbox] = useState([]);
   const [recentEmails, setRecentEmails] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState("Menyiapkan dashboard");
+  const [status, setStatus] = useState("Menyiapkan");
   const [toast, setToast] = useState("");
   const [newMailboxLocalPart, setNewMailboxLocalPart] = useState("");
 
@@ -523,7 +523,7 @@ function App() {
     if (!routeToken || !supabase) {
       setMailbox(sampleMailboxes[0]);
       setInbox(sampleInbox.filter((item) => item.mailbox_id === sampleMailboxes[0].mailbox_id));
-      setStatus(!supabase ? "Mode contoh" : "Token mailbox belum ada");
+      setStatus(!supabase ? "Pratinjau offline" : "Mailbox tidak tersedia");
       setLoading(false);
       return;
     }
@@ -536,8 +536,8 @@ function App() {
     if (mailboxError || inboxError) {
       setMailbox(sampleMailboxes[0]);
       setInbox(sampleInbox.filter((item) => item.mailbox_id === sampleMailboxes[0].mailbox_id));
-      setStatus("RPC mailbox gagal");
-      setToast(mailboxError?.message || inboxError?.message || "Mailbox gagal dimuat.");
+      setStatus("Sinkronisasi gagal");
+      setToast(mailboxError?.message || inboxError?.message || "Mailbox tidak dapat dimuat.");
       setLoading(false);
       return;
     }
@@ -546,14 +546,14 @@ function App() {
     if (!currentMailbox) {
       setMailbox(null);
       setInbox([]);
-      setStatus("Mailbox tidak ditemukan");
+      setStatus("Mailbox tidak tersedia");
       setLoading(false);
       return;
     }
 
     setMailbox(currentMailbox);
     setInbox(Array.isArray(inboxData) ? inboxData : []);
-    setStatus("Mailbox aktif");
+    setStatus("Aktif");
     setLoading(false);
   }
 
@@ -562,7 +562,7 @@ function App() {
     const supabase = getSupabaseClient();
 
     if (!password) {
-      setStatus("Password admin dibutuhkan");
+      setStatus("Perlu autentikasi");
       setLoading(false);
       return;
     }
@@ -570,7 +570,7 @@ function App() {
     if (!supabase) {
       setMailboxes(sampleMailboxes);
       setRecentEmails(sampleInbox);
-      setStatus("Mode contoh");
+      setStatus("Pratinjau offline");
       setLoading(false);
       return true;
     }
@@ -582,8 +582,8 @@ function App() {
     if (passwordError || !isValid) {
       setMailboxes([]);
       setRecentEmails([]);
-      setStatus("Password admin salah");
-      setToast(passwordError?.message || "Password admin salah.");
+      setStatus("Autentikasi gagal");
+      setToast(passwordError?.message || "Password tidak valid.");
       window.localStorage.removeItem(ADMIN_SESSION_KEY);
       setAdminUnlocked(false);
       setLoading(false);
@@ -598,15 +598,15 @@ function App() {
     if (mailboxError || recentError) {
       setMailboxes([]);
       setRecentEmails([]);
-      setStatus("Admin query gagal");
-      setToast(mailboxError?.message || recentError?.message || "Dashboard admin gagal dimuat.");
+      setStatus("Sinkronisasi gagal");
+      setToast(mailboxError?.message || recentError?.message || "Dashboard tidak dapat dimuat.");
       setLoading(false);
       return false;
     }
 
     setMailboxes(Array.isArray(mailboxData) ? mailboxData : []);
     setRecentEmails(Array.isArray(recentData) ? recentData : []);
-    setStatus("Admin aktif");
+    setStatus("Aktif");
     setLoading(false);
     return true;
   }
@@ -632,17 +632,17 @@ function App() {
 
   async function handleCopyMailboxLink(routeTokenToCopy) {
     await copyText(buildMailboxLink(routeTokenToCopy));
-    setToast("Link mailbox disalin.");
+    setToast("Link berhasil disalin.");
   }
 
   async function handleCopyCurrentLink() {
     if (!mailbox?.route_token) {
-      setToast("Link mailbox belum tersedia.");
+      setToast("Link akses belum tersedia.");
       return;
     }
 
     await copyText(buildMailboxLink(mailbox.route_token));
-    setToast("Link mailbox disalin.");
+    setToast("Link berhasil disalin.");
   }
 
   async function handleCopyLatestOtp() {
@@ -650,12 +650,12 @@ function App() {
       const otp = extractOtp(message);
       if (otp) {
         await copyText(otp);
-        setToast("OTP disalin.");
+        setToast("Kode berhasil disalin.");
         return;
       }
     }
 
-    setToast("Belum ada OTP yang terdeteksi.");
+    setToast("Belum ada kode verifikasi.");
   }
 
   function normalizeLocalPart(value) {
@@ -671,7 +671,7 @@ function App() {
 
     const localPart = normalizeLocalPart(newMailboxLocalPart);
     if (!localPart) {
-      setToast("Isi nama email user dulu.");
+      setToast("Masukkan nama mailbox terlebih dahulu.");
       return;
     }
 
@@ -690,7 +690,7 @@ function App() {
 
       setMailboxes((current) => [createdMailbox, ...current]);
       setNewMailboxLocalPart("");
-      setToast("Mailbox contoh dibuat.");
+      setToast("Mailbox berhasil dibuat.");
       return;
     }
 
@@ -709,7 +709,7 @@ function App() {
 
     const createdMailbox = Array.isArray(data) ? data[0] : data;
     setNewMailboxLocalPart("");
-    setToast(createdMailbox ? `Mailbox ${createdMailbox.inbox_email} dibuat.` : "Mailbox dibuat.");
+    setToast(createdMailbox ? `${createdMailbox.inbox_email} berhasil dibuat.` : "Mailbox berhasil dibuat.");
     await refreshAdmin(adminPassword);
   }
 

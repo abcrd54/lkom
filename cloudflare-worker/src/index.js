@@ -78,6 +78,23 @@ async function insertIncomingEmail(env, payload) {
   }
 }
 
+async function insertProcessingLog(env, payload) {
+  const response = await fetch(`${env.SUPABASE_URL}/rest/v1/mail_processing_logs`, {
+    method: "POST",
+    headers: {
+      ...buildSupabaseHeaders(env),
+      "Content-Type": "application/json",
+      Prefer: "return=minimal"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Insert mail_processing_logs failed", errorText);
+  }
+}
+
 function buildSupabaseHeaders(env) {
   return {
     apikey: env.SUPABASE_SERVICE_ROLE_KEY,
@@ -117,14 +134,22 @@ function resolveReceivedAt(dateHeader) {
 
 export default {
   async email(message, env, ctx) {
+    const recipient = normalizeEmail(message.to);
+    const sender = normalizeEmail(message.from);
+
     try {
       assertEnv(env);
 
-      const recipient = normalizeEmail(message.to);
       assertRecipientDomain(recipient, env);
 
       const mailbox = await getMailboxByAddress(env, recipient);
       if (!mailbox) {
+        await insertProcessingLog(env, {
+          inbox_email: recipient,
+          sender_email: sender || null,
+          status: "rejected",
+          error_message: "Mailbox not registered"
+        });
         message.setReject("Mailbox not registered");
         return;
       }
@@ -132,7 +157,7 @@ export default {
       const parsedMail = await parseIncomingEmail(message);
       const subject = String(parsedMail.subject || message.headers.get("subject") || "").trim();
       const senderName = parsedMail.from?.name || "";
-      const senderEmail = normalizeEmail(parsedMail.from?.address || message.from);
+      const senderEmail = normalizeEmail(parsedMail.from?.address || sender);
       const previewText = buildPreview(parsedMail);
       const bodyText = buildBodyText(parsedMail);
       const receivedAt = resolveReceivedAt(message.headers.get("date"));
@@ -146,12 +171,60 @@ export default {
         body_text: bodyText || null,
         received_at: receivedAt
       });
+
+      await insertProcessingLog(env, {
+        mailbox_id: mailbox.id,
+        inbox_email: recipient,
+        sender_email: senderEmail || null,
+        subject: subject || "(No subject)",
+        status: "stored",
+        error_message: null
+      });
     } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+
+      try {
+        await insertProcessingLog(env, {
+          inbox_email: recipient || null,
+          sender_email: sender || null,
+          status: "error",
+          error_message: reason
+        });
+      } catch (logError) {
+        console.error("Failed to write processing log", logError);
+      }
+
       console.error("Email processing failed", {
-        error: error instanceof Error ? error.message : String(error),
+        error: reason,
         to: message.to,
         from: message.from
       });
+
+      if (reason.includes("Missing SUPABASE_URL")) {
+        message.setReject("Worker missing SUPABASE_URL");
+        return;
+      }
+
+      if (reason.includes("Missing SUPABASE_SERVICE_ROLE_KEY")) {
+        message.setReject("Worker missing service role key");
+        return;
+      }
+
+      if (reason.includes("Recipient domain not allowed")) {
+        message.setReject("Recipient domain not allowed");
+        return;
+      }
+
+      if (reason.includes("Mailbox lookup failed")) {
+        message.setReject("Mailbox lookup failed");
+        return;
+      }
+
+      if (reason.includes("Insert incoming_emails failed")) {
+        message.setReject("Mailbox storage failed");
+        return;
+      }
+
       message.setReject("MailDesk processing failed");
     }
   },

@@ -130,6 +130,7 @@ Fungsi Worker:
 - menerima email dari Cloudflare Email Routing
 - mencari `inbox_email` yang cocok di `user_mailboxes`
 - menyimpan email ke `incoming_emails`
+- mencatat error processing ke `mail_processing_logs`
 
 ### Env Worker
 
@@ -157,3 +158,14 @@ npm run deploy
 4. Pilih Worker `maildesk-email-worker`
 
 Setelah itu email ke alamat seperti `riski-ridho@lkom.cloud` akan diterima Worker dan otomatis masuk ke database kalau mailbox tersebut ada di `user_mailboxes`.
+
+### Cek error email masuk
+
+Kalau email ditolak, cek log database:
+
+```sql
+select inbox_email, sender_email, status, error_message, created_at
+from public.mail_processing_logs
+order by created_at desc
+limit 30;
+```
